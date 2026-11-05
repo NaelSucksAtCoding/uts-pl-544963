@@ -145,11 +145,11 @@ jobs:
             "$BACKEND_IMAGE"
 
           for _ in $(seq 1 30); do
-            curl -sf http://127.0.0.1/up > /dev/null && break
+            curl -sf http://127.0.0.1/health > /dev/null && break
             sleep 2
           done
 
-          curl -sf http://127.0.0.1/up > /dev/null
+          curl -sf http://127.0.0.1/health | grep -q '"status":"healthy"'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/api/bookings)" = "401"
           curl -sf -X POST http://127.0.0.1/api/login \
             -H 'Content-Type: application/json' \

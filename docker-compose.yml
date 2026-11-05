@@ -1,10 +1,18 @@
 # Menjalankan seluruh sistem: docker compose up -d --build
 # Kredensial dibaca dari berkas .env (salin dari .env.example).
 
+# Ukuran log tiap container dibatasi: paling banyak 3 berkas @ 10 MB.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: mysql:8.4
     restart: unless-stopped
+    logging: *logging
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-futsal}
       MYSQL_USER: ${DB_USERNAME:-futsal}
@@ -16,11 +24,18 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 12
+      start_period: 30s
 
   backend:
     build: ./backend
     restart: unless-stopped
+    logging: *logging
+    # Saat service "db" mati, nama "db" tidak ditemukan. Tanpa ini pencarian DNS membuat
+    # /health baru membalas 503 setelah sekitar 15 detik, melewati timeout healthcheck.
+    dns_opt:
+      - timeout:1
+      - attempts:1
     depends_on:
       db:
         condition: service_healthy
@@ -34,16 +49,23 @@ services:
       DB_DATABASE: ${DB_DATABASE:-futsal}
       DB_USERNAME: ${DB_USERNAME:-futsal}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Log keluar ke stdout, bukan ke berkas di dalam container.
+      LOG_CHANNEL: stdout
+      LOG_LEVEL: info
+      # Cache tidak memakai database, supaya /health bisa membedakan keduanya.
+      CACHE_STORE: file
       RUN_MIGRATIONS: "true"
       RUN_SEEDER: "true"
     ports:
       - "${BACKEND_PORT:-8000}:80"
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost/up"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
+      # /health memeriksa database dan cache; curl -f gagal saat dibalas 503.
+      test: ["CMD", "curl", "-fs", "-o", "/dev/null", "http://localhost/health"]
+      interval: 10s
+      # Lebih panjang dari waktu balasan 503 saat database mati (sekitar 5 detik).
+      timeout: 8s
+      retries: 3
+      start_period: 30s
 
   frontend:
     build:
@@ -53,11 +75,18 @@ services:
         # ke service "backend" (lihat frontend/nginx.conf).
         VITE_API_URL: /api
     restart: unless-stopped
+    logging: *logging
     depends_on:
       backend:
         condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
 volumes:
   db_data:

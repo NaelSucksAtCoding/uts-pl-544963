@@ -52,6 +52,21 @@ docker compose logs backend | grep "handled request"      # access log setiap re
 curl -I http://localhost:8000/api/bookings                # header "Server: Caddy" dan "X-Powered-By: PHP/8.3.26"
 ```
 
+### Log dan Health Check
+
+- Log Laravel keluar ke stdout dalam bentuk JSON, tidak ada berkas log di dalam container. Lihat dengan `docker compose logs backend`.
+- Setiap log memuat `siapa`, `aksi`, dan `sebab`. Password, token, email, nama penyewa, dan alamat IP tidak dicatat.
+- `GET http://localhost:8000/health` memeriksa database dan cache. Balasannya 200 kalau sehat, dan 503 kalau ada yang bermasalah, dengan nama bagian yang bermasalah di `bermasalah`.
+- Healthcheck backend di `docker-compose.yml` memakai `/health`, jadi statusnya menjadi `unhealthy` saat database mati dan kembali `healthy` setelah database menyala.
+- Log tiap container dibatasi 3 berkas @ 10 MB.
+
+```bash
+docker compose stop db     # setelah sekitar 30 detik backend menjadi unhealthy
+docker compose ps
+docker compose logs backend --tail 5
+docker compose start db    # backend kembali healthy
+```
+
 ## Menjalankan tanpa Docker
 
 **Backend** (terminal 1):
