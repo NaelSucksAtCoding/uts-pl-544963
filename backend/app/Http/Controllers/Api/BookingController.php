@@ -7,8 +7,10 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
+use App\Support\KonteksLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
@@ -26,6 +28,14 @@ class BookingController extends Controller
     public function store(StoreBookingRequest $request): JsonResponse
     {
         $booking = Booking::create($request->validated());
+
+        Log::info('Booking berhasil dibuat', [
+            'siapa' => KonteksLog::siapa(),
+            'aksi' => 'booking.tambah',
+            'sebab' => 'permintaan_admin',
+            'booking_id' => $booking->id,
+            'nomor_lapangan' => $booking->nomor_lapangan,
+        ]);
 
         return (new BookingResource($booking->refresh()))
             ->additional(['message' => 'Booking berhasil dibuat.'])
@@ -48,6 +58,14 @@ class BookingController extends Controller
     {
         $booking->update($request->validated());
 
+        Log::info('Booking berhasil diubah', [
+            'siapa' => KonteksLog::siapa(),
+            'aksi' => 'booking.ubah',
+            'sebab' => 'permintaan_admin',
+            'booking_id' => $booking->id,
+            'field' => array_keys($request->validated()),
+        ]);
+
         return (new BookingResource($booking))
             ->additional(['message' => 'Booking berhasil diubah.']);
     }
@@ -58,6 +76,13 @@ class BookingController extends Controller
     public function destroy(Booking $booking): JsonResponse
     {
         $booking->delete();
+
+        Log::info('Booking berhasil dihapus', [
+            'siapa' => KonteksLog::siapa(),
+            'aksi' => 'booking.hapus',
+            'sebab' => 'permintaan_admin',
+            'booking_id' => $booking->id,
+        ]);
 
         return response()->json(['message' => 'Booking berhasil dihapus.']);
     }

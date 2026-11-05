@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\MencatatValidasiGagal;
 use App\Models\Booking;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Validator;
 
 class StoreBookingRequest extends FormRequest
 {
+    use MencatatValidasiGagal;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -49,6 +52,7 @@ class StoreBookingRequest extends FormRequest
                 }
 
                 if (Booking::isBentrok($this->integer('nomor_lapangan'), $this->input('jam_mulai'), $this->input('jam_selesai'))) {
+                    $this->sebabValidasi = 'jadwal_bentrok';
                     $validator->errors()->add('jam_mulai', 'Lapangan sudah dibooking pada jam tersebut.');
                 }
             },

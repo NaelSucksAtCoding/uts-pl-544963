@@ -10,10 +10,23 @@
 :80 {
 	# Access log ke stdout, sehingga setiap request yang dilayani FrankenPHP
 	# terlihat di "docker compose logs backend".
+	# Header dan alamat IP klien tidak ikut dicatat, supaya log bebas data pribadi.
 	log {
 		output stdout
-		format json
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				resp_headers delete
+			}
+		}
 	}
+
+	# Healthcheck berjalan terus-menerus, jadi tidak perlu memenuhi access log.
+	log_skip /health
 
 	root public/
 	encode zstd br gzip

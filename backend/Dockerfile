@@ -27,7 +27,9 @@ RUN sed -i 's/\r$//' /usr/local/bin/entrypoint && chmod +x /usr/local/bin/entryp
 ENV APP_ENV=production \
     APP_DEBUG=false \
     APP_LOCALE=id \
-    LOG_CHANNEL=stderr
+    CACHE_STORE=file \
+    LOG_CHANNEL=stdout \
+    LOG_LEVEL=info
 
 EXPOSE 80
 
