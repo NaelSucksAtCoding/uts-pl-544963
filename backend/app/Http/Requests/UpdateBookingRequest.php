@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\MencatatValidasiGagal;
 use App\Models\Booking;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Validator;
 
 class UpdateBookingRequest extends FormRequest
 {
+    use MencatatValidasiGagal;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -62,6 +65,7 @@ class UpdateBookingRequest extends FormRequest
                 }
 
                 if (Booking::isBentrok($nomorLapangan, $jamMulai, $jamSelesai, $booking->id)) {
+                    $this->sebabValidasi = 'jadwal_bentrok';
                     $validator->errors()->add('jam_mulai', 'Lapangan sudah dibooking pada jam tersebut.');
                 }
             },
