@@ -1,0 +1,10 @@
+apiVersion: 1
+
+# Dashboard dimuat dari berkas JSON di repository saat Grafana menyala.
+providers:
+  - name: default
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards

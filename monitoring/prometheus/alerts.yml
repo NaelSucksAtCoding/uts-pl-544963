@@ -1,0 +1,12 @@
+groups:
+  - name: aplikasi
+    rules:
+      - alert: BackendMati
+        expr: up{job="aplikasi"} == 0
+        # Harus gagal ditarik selama 1 menit penuh, supaya satu kedipan tidak langsung jadi alarm.
+        for: 1m
+        labels:
+          severity: kritis
+        annotations:
+          summary: "Backend booking futsal tidak bisa ditarik Prometheus selama 1 menit."
+          action: "Jalankan 'docker compose ps backend', lalu 'docker compose logs backend --tail 50' untuk melihat kenapa container berhenti."

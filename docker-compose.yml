@@ -88,5 +88,57 @@ services:
       retries: 3
       start_period: 5s
 
+  # ---------- Monitoring ----------
+  # Port Prometheus dan Grafana hanya dibuka untuk laptop ini (127.0.0.1), tidak ke jaringan.
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      # Password admin dibaca dari .env, bukan bawaan admin/admin.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD wajib diisi di .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  # CPU dan memori tiap container, dibaca dari cgroup lewat Docker.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  # CPU, memori, dan disk mesin yang menjalankan Docker.
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    restart: unless-stopped
+    logging: *logging
+
 volumes:
   db_data:
+  prometheus_data:
+  grafana_data:
