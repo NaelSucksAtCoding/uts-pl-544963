@@ -4,6 +4,14 @@
 {
 	skip_install_trust
 	frankenphp
+	# Metrik request (jumlah, status, waktu tanggap) untuk Prometheus.
+	metrics
+}
+
+# Metrik untuk Prometheus. Port ini tidak dibuka ke laptop di docker-compose.yml,
+# jadi hanya bisa dijangkau dari jaringan Compose.
+:9180 {
+	metrics /metrics
 }
 
 # HTTP biasa di port 80; HTTPS ditangani di luar container.
