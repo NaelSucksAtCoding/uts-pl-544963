@@ -67,6 +67,20 @@ docker compose logs backend --tail 5
 docker compose start db    # backend kembali healthy
 ```
 
+### Monitoring (Prometheus dan Grafana)
+
+`docker compose up -d` juga menjalankan Prometheus, Grafana, cAdvisor, dan node-exporter. Semua versi image dikunci, dan data Prometheus serta Grafana disimpan di volume.
+
+| Layanan | Alamat | Isi |
+|---|---|---|
+| Prometheus | http://localhost:9090 | `/targets` untuk status sumber metrik, `/alerts` untuk alarm |
+| Grafana | http://localhost:3000 | Dashboard "Booking Futsal: Kesehatan Layanan" (login `admin` dengan `GRAFANA_ADMIN_PASSWORD` dari `.env`) |
+
+- Konfigurasi ada di [`monitoring/`](monitoring/): `prometheus/prometheus.yml`, `prometheus/alerts.yml`, dan dashboard `grafana/dashboards/booking-futsal.json` yang dimuat otomatis.
+- Metrik aplikasi diambil dari FrankenPHP di `backend:9180/metrics`. Port ini tidak dibuka ke laptop.
+- Port Prometheus dan Grafana hanya dibuka di `127.0.0.1`. Password admin Grafana wajib diisi di `.env`, jadi `admin/admin` tidak bisa dipakai.
+- Alarm `BackendMati` berbunyi kalau backend tidak bisa ditarik selama 1 menit. Coba dengan `docker compose stop backend`, lalu buka `/alerts`.
+
 ## Menjalankan tanpa Docker
 
 **Backend** (terminal 1):
